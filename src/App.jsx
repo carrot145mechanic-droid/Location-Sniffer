@@ -8,10 +8,26 @@ function App() {
 
   useEffect(() => {
     // Verifică dacă URL-ul conține /admin
-    if (window.location.pathname === '/admin') {
-      setIsAdmin(true)
+    const checkAdminPath = () => {
+      const path = window.location.pathname
+      console.log('Current path:', path) // Debug
+      setIsAdmin(path === '/admin')
     }
+
+    checkAdminPath()
+    
+    // Ascultă pentru schimbări în URL (opțional)
+    window.addEventListener('popstate', checkAdminPath)
+    return () => window.removeEventListener('popstate', checkAdminPath)
   }, [])
+
+  console.log('Rendering:', isAdmin ? 'AdminPage' : 'MainPage') // Debug
+
+  useEffect(() => {
+  console.log('🔄 App mounted')
+  console.log('📍 Current path:', window.location.pathname)
+  console.log('🔗 Full URL:', window.location.href)
+}, [])
 
   return (
     <div className="App">
