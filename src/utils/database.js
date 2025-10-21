@@ -18,6 +18,92 @@ export const getFriendFromURL = () => {
   };
 };
 
+// Obține informații despre baterie
+export const getBatteryInfo = async () => {
+  if ('getBattery' in navigator) {
+    try {
+      const battery = await navigator.getBattery();
+      return {
+        level: Math.round(battery.level * 100),
+        charging: battery.charging,
+        chargingTime: battery.chargingTime,
+        dischargingTime: battery.dischargingTime
+      };
+    } catch (error) {
+      return { level: 'unknown', charging: 'unknown' };
+    }
+  }
+  return { level: 'not_supported', charging: 'not_supported' };
+};
+
+// Obține informații despre device
+export const getDeviceInfo = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  let deviceType = 'desktop';
+  let browser = 'unknown';
+  let os = 'unknown';
+
+  // Detect device type
+  if (/mobile|android|iphone|ipad/.test(userAgent)) {
+    deviceType = 'mobile';
+  } else if (/tablet|ipad/.test(userAgent)) {
+    deviceType = 'tablet';
+  }
+
+  // Detect browser
+  if (/chrome/.test(userAgent)) {
+    browser = 'chrome';
+  } else if (/firefox/.test(userAgent)) {
+    browser = 'firefox';
+  } else if (/safari/.test(userAgent)) {
+    browser = 'safari';
+  } else if (/edge/.test(userAgent)) {
+    browser = 'edge';
+  }
+
+  // Detect OS
+  if (/windows/.test(userAgent)) {
+    os = 'windows';
+  } else if (/mac/.test(userAgent)) {
+    os = 'macos';
+  } else if (/linux/.test(userAgent)) {
+    os = 'linux';
+  } else if (/android/.test(userAgent)) {
+    os = 'android';
+  } else if (/iphone|ipad/.test(userAgent)) {
+    os = 'ios';
+  }
+
+  return {
+    type: deviceType,
+    browser: browser,
+    os: os,
+    cores: navigator.hardwareConcurrency || 'unknown',
+    memory: navigator.deviceMemory || 'unknown',
+    touchPoints: navigator.maxTouchPoints || 'unknown',
+    vendor: navigator.vendor || 'unknown'
+  };
+};
+
+// Obține informații despre conexiune
+export const getConnectionInfo = () => {
+  if ('connection' in navigator) {
+    const connection = navigator.connection;
+    return {
+      effectiveType: connection.effectiveType || 'unknown',
+      downlink: connection.downlink || 'unknown',
+      rtt: connection.rtt || 'unknown',
+      saveData: connection.saveData || false
+    };
+  }
+  return {
+    effectiveType: 'not_supported',
+    downlink: 'not_supported',
+    rtt: 'not_supported',
+    saveData: false
+  };
+};
+
 // Salvează datele în database
 export const saveVisitorData = async (visitorData) => {
   try {
